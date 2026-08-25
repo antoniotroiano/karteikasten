@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mein Karteikasten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EBE6DA;
+    --paper-dark: #DDD6C4;
+    --ink: #262521;
+    --ink-soft: #746D5D;
+    --card-bg: #FBF8F0;
+    --border: #C9C2AC;
+    --teal: #2F6F6A;
+    --teal-light: #5B8C86;
+    --clay: #A85C3B;
+    --amber: #C2954B;
+    --olive: #9CA355;
+    --danger: #A8443A;
+    --box1: #A85C3B;
+    --box2: #C2954B;
+    --box3: #9CA355;
+    --box4: #5B8C86;
+    --box5: #2F6F6A;
+    --cat-englisch: #2F6F6A;
+    --cat-isaqb: #A85C3B;
+    --cat-sonstiges: #55708A;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(38,37,33,0.08), 0 1px 2px rgba(38,37,33,0.06);
+    --shadow-lift: 0 8px 24px rgba(38,37,33,0.16), 0 2px 6px rgba(38,37,33,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height:100vh;
+  }
+  .app{
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+  header.top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom: 20px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 28px;
+    margin:0;
+    letter-spacing: -0.01em;
+  }
+  .subtitle{
+    font-size:13px;
+    color: var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+    margin-top:2px;
+  }
+  .stat-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    color: var(--ink-soft);
+  }
+  .stat-pill b{ color: var(--clay); }
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    margin-bottom: 22px;
+    border-bottom: 2px solid var(--border);
+  }
+  nav.tabs button{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size: 14px;
+    padding: 10px 16px;
+    background: transparent;
+    border:none;
+    border-bottom: 3px solid transparent;
+    color: var(--ink-soft);
+    cursor:pointer;
+    margin-bottom:-2px;
+    transition: color .15s ease;
+  }
+  nav.tabs button.active{
+    color: var(--ink);
+    border-bottom-color: var(--teal);
+  }
+  nav.tabs button:hover{ color: var(--ink); }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; animation: fadein .2s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  /* --- Erfassen --- */
+  .card-form{
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  label{
+    display:block;
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink-soft);
+    margin-bottom:4px;
+    margin-top:14px;
+  }
+  label:first-child{ margin-top:0; }
+  input[type=text], textarea, select{
+    width:100%;
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    background:#fff;
+    color: var(--ink);
+  }
+  input[type=text]:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color: var(--teal);
+  }
+  textarea{ resize:vertical; min-height:50px; font-family:'Inter', sans-serif; }
+  .cat-row{ display:flex; gap:8px; margin-top:6px; }
+  .cat-choice{
+    flex:1;
+    text-align:center;
+    padding:8px 6px;
+    border-radius:6px;
+    border:1.5px solid var(--border);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    background:#fff;
+    color: var(--ink-soft);
+    user-select:none;
+  }
+  .cat-choice[data-cat="englisch"].selected{ background: var(--cat-englisch); color:#fff; border-color:var(--cat-englisch); }
+  .cat-choice[data-cat="isaqb"].selected{ background: var(--cat-isaqb); color:#fff; border-color:var(--cat-isaqb); }
+  .cat-choice[data-cat="sonstiges"].selected{ background: var(--cat-sonstiges); color:#fff; border-color:var(--cat-sonstiges); }
+
+  .btn{
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding: 11px 20px;
+    border-radius:7px;
+    border:none;
+    cursor:pointer;
+    transition: transform .1s ease, opacity .15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--teal); color:#fff; }
+  .btn-primary:hover{ opacity:0.92; }
+  .btn-block{ width:100%; margin-top:18px; }
+  .btn-ghost{ background:transparent; border:1.5px solid var(--border); color:var(--ink); }
+
+  .toast{
+    margin-top:12px;
+    font-size:13px;
+    color: var(--teal);
+    font-weight:600;
+    font-family:'IBM Plex Mono', monospace;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .toast.show{ opacity:1; }
+
+  .ai-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .ai-status{
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink-soft);
+  }
+  .suggest-toolbar{ margin-bottom:10px; }
+  .suggest-row{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    margin-bottom:8px;
+    background:#fff;
+  }
+  .suggest-row input[type=checkbox]{
+    margin-top:11px;
+    width:16px; height:16px;
+    flex-shrink:0;
+    accent-color: var(--teal);
+  }
+  .suggest-fields{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .suggest-fields input[type=text]{
+    width:100%;
+    font-size:13px;
+    padding:7px 9px;
+    border:1px solid var(--border);
+    border-radius:5px;
+    font-family:'Inter', sans-serif;
+  }
+  .suggest-fields input.suggest-term{ font-weight:700; }
+  .suggest-fields input.suggest-example{ font-style:italic; color: var(--ink-soft); }
+
+  .recent{ margin-top:26px; }
+  .recent h3{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .mini-card{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    margin-bottom:6px;
+    font-size:14px;
+  }
+  .tab-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .mini-card .term{ font-weight:600; }
+  .mini-card .def{ color: var(--ink-soft); flex:1; }
+  .mini-del{ cursor:pointer; color: var(--ink-soft); border:none; background:none; font-size:16px; padding:2px 6px; }
+  .mini-del:hover{ color: var(--danger); }
+
+  /* --- Lernen --- */
+  .due-summary{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .due-chip{
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 14px;
+    font-size:13px;
+    flex:1;
+    min-width:100px;
+  }
+  .due-chip .n{ font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:600; display:block; }
+  .due-chip.total .n{ color: var(--clay); }
+
+  .session-area{ display:flex; flex-direction:column; align-items:center; }
+  .session-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    max-width:440px;
+    margin-bottom:14px;
+  }
+  .progress-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color: var(--ink-soft);
+  }
+  .link-btn{
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:4px 2px;
+  }
+  .link-btn:hover{ color: var(--danger); }
+  .flashcard{
+    width:100%;
+    max-width:440px;
+    height:220px;
+    min-height:220px;
+    max-height:min(70vh, 520px);
+    perspective: 1200px;
+    margin-bottom:22px;
+    transition: height .15s ease;
+  }
+  .flashcard-inner{
+    position:relative;
+    width:100%;
+    height:100%;
+    transition: transform .4s cubic-bezier(.4,.2,.2,1);
+    transform-style: preserve-3d;
+    cursor:pointer;
+  }
+  .flashcard.flipped .flashcard-inner{ transform: rotateY(180deg); }
+  .face{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lift);
+    display:flex;
+    flex-direction:column;
+    padding: 26px 22px 16px;
+    overflow:hidden;
+  }
+  .face .cat-tab{
+    position:absolute;
+    top:0; left:20px;
+    padding:4px 12px;
+    border-radius:0 0 6px 6px;
+    font-size:10px;
+    font-family:'IBM Plex Mono', monospace;
+    color:#fff;
+    letter-spacing:0.05em;
+    z-index:2;
+  }
+  .face .box-tag{
+    position:absolute;
+    top:12px; right:16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: var(--ink-soft);
+    z-index:2;
+  }
+  .face-content{
+    flex:1;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    overflow-y:auto;
+    padding-top:14px;
+    scrollbar-width:thin;
+  }
+  .face-content.is-long{
+    justify-content:flex-start;
+    text-align:left;
+    align-items:stretch;
+  }
+  .face .term-text{
+    font-family:'Fraunces', serif;
+    font-size:26px;
+    font-weight:600;
+  }
+  .face .term-text.compact{ font-size:19px; }
+  .face.back .term-text{ font-size:16px; color: var(--ink-soft); font-family:'Inter',sans-serif; font-weight:500; margin-bottom:2px; }
+  .face .def-text{
+    font-family:'Fraunces', serif;
+    font-size:24px;
+    font-weight:600;
+    margin-top:8px;
+    line-height:1.3;
+  }
+  .face .def-text.compact{
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+    font-weight:500;
+    line-height:1.5;
+    text-align:left;
+  }
+  .face .example-text{
+    margin-top:14px;
+    font-size:14px;
+    color: var(--ink-soft);
+    font-style:italic;
+    line-height:1.4;
+  }
+  .face .example-text.compact{ font-size:12.5px; margin-top:10px; text-align:left; }
+  .face .mnemonic-text{
+    margin-top:12px;
+    font-size:13px;
+    font-style:normal;
+    color: var(--teal);
+    background: rgba(47,111,106,0.08);
+    padding:9px 11px;
+    border-radius:7px;
+    text-align:left;
+    line-height:1.45;
+  }
+  .face .mnemonic-text:empty{ display:none; margin:0; padding:0; }
+  .face.back{ transform: rotateY(180deg); }
+  .hint{ font-size:12px; color: var(--ink-soft); margin-top:-10px; margin-bottom:16px; font-family:'IBM Plex Mono', monospace; }
+
+  .rate-row{ display:flex; gap:8px; width:100%; max-width:440px; }
+  .rate-btn{
+    flex:1;
+    padding:12px 4px;
+    border-radius:8px;
+    border:none;
+    color:#fff;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .rate-again{ background: var(--danger); }
+  .rate-hard{ background: var(--box2); }
+  .rate-good{ background: var(--box4); }
+  .rate-easy{ background: var(--box5); }
+  .rate-btn:active{ transform: scale(0.96); }
+
+  .empty-state, .done-state{
+    text-align:center;
+    padding: 50px 20px;
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .empty-state .big{ font-family:'Fraunces', serif; font-size:20px; margin-bottom:8px; }
+  .empty-state p, .done-state p{ color: var(--ink-soft); font-size:14px; }
+
+  /* --- Übersicht --- */
+  .boxes-viz{ margin-bottom: 26px; }
+  .box-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:8px;
+  }
+  .box-label{
+    width:110px;
+    flex-shrink:0;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: var(--ink-soft);
+  }
+  .box-track{
+    flex:1;
+    background: var(--paper-dark);
+    border-radius:6px;
+    height:26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .box-fill{
+    height:100%;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding-right:8px;
+    color:#fff;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    transition: width .3s ease;
+    min-width: 28px;
+  }
+
+  .filter-row{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .filter-chip{
+    padding:6px 12px;
+    border-radius:16px;
+    border:1.5px solid var(--border);
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    background: var(--card-bg);
+    color: var(--ink-soft);
+  }
+  .filter-chip.active{ background: var(--ink); color:#fff; border-color:var(--ink); }
+
+  .list-card{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:6px;
+  }
+  .list-card .info{ flex:1; min-width:0; }
+  .list-card .term{ font-weight:600; font-size:14px; }
+  .list-card .def{ font-size:13px; color: var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .list-card .meta{ font-family:'IBM Plex Mono', monospace; font-size:10px; color: var(--ink-soft); white-space:nowrap; }
+
+  .loading{ text-align:center; padding:40px; color: var(--ink-soft); font-family:'IBM Plex Mono', monospace; font-size:13px; }
+
+  .uebersicht-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  #resetArea{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .reset-confirm-text{
+    font-size:12px;
+    color: var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .section-title{
+    font-family:'Fraunces', serif;
+    font-size:15px;
+    font-weight:600;
+    margin:0;
+  }
+  .link-btn.danger{ color: var(--danger); }
+
+  .glossary-section{ margin-bottom:24px; }
+  .glossary-section:last-child{ margin-bottom:0; }
+  .glossary-section h3{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0 0 8px;
+  }
+  .glossary-section p{
+    font-size:14px;
+    color: var(--ink-soft);
+    line-height:1.6;
+    margin:0;
+  }
+  .glossary-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    font-size:13px;
+  }
+  .glossary-table th, .glossary-table td{
+    text-align:left;
+    padding:7px 8px;
+    border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  .glossary-table th{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color: var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .rate-swatch{
+    display:inline-block;
+    width:10px; height:10px;
+    border-radius:3px;
+    margin-right:7px;
+    vertical-align:middle;
+  }
+
+  @media (max-width: 480px){
+    h1{ font-size:22px; }
+    .face .term-text{ font-size:21px; }
+    .face .def-text{ font-size:19px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Mein Karteikasten</h1>
+      <div class="subtitle">Begriffe erfassen · mit Karteikasten-System lernen</div>
+    </div>
+    <div class="stat-pill" id="headerStat">lädt…</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="erfassen">➕ Erfassen</button>
+    <button data-tab="lernen">🎯 Lernen</button>
+    <button data-tab="uebersicht">📚 Übersicht</button>
+    <button data-tab="glossar">📖 Glossar</button>
+  </nav>
+
+  <!-- ERFASSEN -->
+  <section class="panel active" id="panel-erfassen">
+    <div class="card-form">
+      <label for="f-term">Begriff / Wort</label>
+      <input type="text" id="f-term" placeholder="z. B. 'Bottleneck' oder 'Loose Coupling'">
+
+      <label for="f-def">Übersetzung / Definition</label>
+      <textarea id="f-def" placeholder="z. B. 'Engpass' oder Definition des Begriffs"></textarea>
+
+      <label>Kategorie</label>
+      <div class="cat-row" id="mainCatRow">
+        <div class="cat-choice selected" data-cat="englisch">Englisch</div>
+        <div class="cat-choice" data-cat="isaqb">iSAQB</div>
+        <div class="cat-choice" data-cat="sonstiges">Sonstiges</div>
+      </div>
+
+      <label for="f-ex">Beispiel / Kontext (optional)</label>
+      <textarea id="f-ex" placeholder="Kurzer Satz, in dem das Wort vorkam"></textarea>
+
+      <label for="f-mnemonic">Eselsbrücke (optional)</label>
+      <textarea id="f-mnemonic" placeholder="Merkhilfe oder Eselsbrücke"></textarea>
+      <div class="ai-row">
+        <button class="btn btn-ghost" id="mnemonicBtn" type="button">💡 Eselsbrücke vorschlagen (KI)</button>
+        <span class="ai-status" id="mnemonicStatus"></span>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="saveBtn">Karte speichern</button>
+      <div class="toast" id="saveToast">✓ Gespeichert — direkt weiter erfassen</div>
+    </div>
+
+    <div class="card-form" style="margin-top:20px;">
+      <h3 class="section-title" style="margin-bottom:6px;">🪄 Mehrere Karten aus Text erzeugen</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5;">Text einfügen (Artikel, Vokabelliste, Glossar-Auszug) — Claude schlägt passende Karten vor. Du prüfst und wählst danach aus, bevor etwas gespeichert wird.</p>
+
+      <label>Kategorie für alle Vorschläge</label>
+      <div class="cat-row" id="batchCatRow">
+        <div class="cat-choice selected" data-cat="englisch">Englisch</div>
+        <div class="cat-choice" data-cat="isaqb">iSAQB</div>
+        <div class="cat-choice" data-cat="sonstiges">Sonstiges</div>
+      </div>
+
+      <label for="batch-text">Text</label>
+      <textarea id="batch-text" placeholder="Text hier einfügen…" style="min-height:110px;"></textarea>
+
+      <button class="btn btn-primary btn-block" id="batchGenBtn" type="button">Vorschläge generieren</button>
+      <div class="ai-status" id="batchStatus" style="display:none; margin-top:10px;"></div>
+      <div id="batchResults" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="recent">
+      <h3>Zuletzt erfasst</h3>
+      <div id="recentList"><div class="loading">lädt…</div></div>
+    </div>
+  </section>
+
+  <!-- LERNEN -->
+  <section class="panel" id="panel-lernen">
+    <div id="lernenPre">
+      <div class="filter-row" id="learnCatRow">
+        <div class="filter-chip active" data-learncat="alle">Alle</div>
+        <div class="filter-chip" data-learncat="englisch">Englisch</div>
+        <div class="filter-chip" data-learncat="isaqb">iSAQB</div>
+        <div class="filter-chip" data-learncat="sonstiges">Sonstiges</div>
+      </div>
+      <div class="due-summary" id="dueSummary"></div>
+      <div id="learnActions"></div>
+    </div>
+
+    <div class="session-area" id="sessionArea" style="display:none;">
+      <div class="session-header">
+        <div class="progress-line" id="progressLine"></div>
+        <button class="link-btn" id="abortSessionBtn">Abbrechen</button>
+      </div>
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-inner" id="flashcardInner">
+          <div class="face front">
+            <span class="cat-tab" id="frontCatTab"></span>
+            <span class="box-tag" id="frontBoxTag"></span>
+            <div class="face-content" id="frontContent">
+              <div class="term-text" id="frontTerm"></div>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="cat-tab" id="backCatTab"></span>
+            <div class="face-content" id="backContent">
+              <div class="term-text" id="backTerm"></div>
+              <div class="def-text" id="backDef"></div>
+              <div class="example-text" id="backExample"></div>
+              <div class="mnemonic-text" id="backMnemonic"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hint" id="flipHint">Karte antippen, um Antwort zu zeigen</div>
+      <div class="rate-row" id="rateRow" style="display:none;">
+        <button class="rate-btn rate-again" data-rate="again">Nochmal</button>
+        <button class="rate-btn rate-hard" data-rate="hard">Schwer</button>
+        <button class="rate-btn rate-good" data-rate="good">Gut</button>
+        <button class="rate-btn rate-easy" data-rate="easy">Leicht</button>
+      </div>
+    </div>
+
+    <div id="doneArea" style="display:none;" class="done-state">
+      <div class="big">Sitzung beendet 🎉</div>
+      <p id="doneStats"></p>
+      <button class="btn btn-ghost" id="backToOverviewBtn">Zurück</button>
+    </div>
+  </section>
+
+  <!-- ÜBERSICHT -->
+  <section class="panel" id="panel-uebersicht">
+    <div class="uebersicht-header">
+      <h3 class="section-title">Fortschritt nach Box</h3>
+      <div id="resetArea"></div>
+    </div>
+    <div class="boxes-viz" id="boxesViz"></div>
+    <div class="filter-row" id="filterRow">
+      <div class="filter-chip active" data-filter="alle">Alle</div>
+      <div class="filter-chip" data-filter="englisch">Englisch</div>
+      <div class="filter-chip" data-filter="isaqb">iSAQB</div>
+      <div class="filter-chip" data-filter="sonstiges">Sonstiges</div>
+    </div>
+    <div id="fullList"><div class="loading">lädt…</div></div>
+  </section>
+
+  <!-- GLOSSAR -->
+  <section class="panel" id="panel-glossar">
+    <div class="card-form">
+
+      <div class="glossary-section">
+        <h3>Das Prinzip: Karteikasten (Leitner-System)</h3>
+        <p>Jede Karte wandert je nach dem, wie sicher du sie weißt, durch fünf "Boxen". Neue oder schlecht gewusste Karten bleiben in einer niedrigen Box und kommen oft dran. Gut gewusste Karten wandern nach oben und werden immer seltener abgefragt. So verbringst du deine Zeit vor allem mit dem, was noch nicht sitzt.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Die 5 Boxen</h3>
+        <table class="glossary-table">
+          <tr><th>Box</th><th>Rhythmus</th><th>Bedeutung</th></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box1)"></span>Box 1</td><td>täglich</td><td>neu oder gerade vergessen</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box2)"></span>Box 2</td><td>alle 3 Tage</td><td>erste Sicherheit</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box3)"></span>Box 3</td><td>wöchentlich</td><td>sitzt ganz gut</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box4)"></span>Box 4</td><td>alle 2 Wochen</td><td>sitzt sicher</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box5)"></span>Box 5</td><td>alle 30 Tage</td><td>gemeistert, nur Auffrischung</td></tr>
+        </table>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Was bedeutet „fällig"?</h3>
+        <p>Jede Karte hat ein gespeichertes Datum für die nächste Wiederholung. „Fällig" heißt: dieses Datum ist erreicht oder liegt in der Vergangenheit. Nur Box-1-Karten sind normalerweise täglich fällig — höhere Boxen erst nach ihrem jeweiligen Rhythmus. Deshalb musst du nicht jeden Tag deinen ganzen Bestand durchgehen, sondern nur das, was gerade dran ist.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Die vier Bewertungen beim Lernen</h3>
+        <table class="glossary-table">
+          <tr><th>Knopf</th><th>Wirkung</th></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--danger)"></span>Nochmal</td><td>Karte zurück auf Box 1, bleibt heute fällig, kommt in dieser Sitzung nochmal dran</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box2)"></span>Schwer</td><td>bleibt in derselben Box, aber kürzerer Abstand bis zur Wiederholung</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box4)"></span>Gut</td><td>wandert eine Box nach oben</td></tr>
+          <tr><td><span class="rate-swatch" style="background:var(--box5)"></span>Leicht</td><td>wandert zwei Boxen nach oben (überspringt eine Stufe)</td></tr>
+        </table>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Kategorien &amp; Mischen (Interleaving)</h3>
+        <p>Englisch-Vokabeln, iSAQB-Begriffe und Sonstiges kannst du getrennt oder gemischt lernen (Filter oben im Tab „Lernen"). Bei „Alle" werden fällige Karten aus allen Kategorien zufällig gemischt statt block­weise abgefragt — das nennt man Interleaving, es hilft dem Gehirn, Begriffe wirklich zu unterscheiden statt sie nur in Reihenfolge auswendig zu lernen.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>„Sitzung starten" vs. „Trotzdem üben"</h3>
+        <p><b>Sitzung starten</b> zeigt dir ausschließlich Karten, die wirklich fällig sind. Ist nichts fällig, erscheint stattdessen der Button <b>„Trotzdem X Karten üben"</b> — eine bewusste, freiwillige Extra-Runde mit zufälligen Karten, auch wenn die eigentlich noch nicht dran wären. Das passiert nie automatisch im Hintergrund, sondern nur wenn du diesen Button aktiv anklickst.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Sitzung abbrechen</h3>
+        <p>Der „Abbrechen"-Link während einer Sitzung beendet sie sofort. Bereits bewertete Karten bleiben mit ihrer neuen Box und ihrem neuen Fälligkeitsdatum gespeichert — nichts geht verloren. Noch nicht bewertete Karten bleiben einfach unverändert fällig, bis du sie das nächste Mal lernst.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Lernstand zurücksetzen (Übersicht)</h3>
+        <p>Setzt bei allen Karten die Box wieder auf 1 und das Fälligkeitsdatum auf „jetzt". Die Begriffe, Definitionen und Beispiele selbst bleiben erhalten — nur der Lernfortschritt wird gelöscht. Praktisch zum Testen oder für einen bewussten Neustart.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>Wo werden die Daten gespeichert?</h3>
+        <p>Diese Version speichert im <b>localStorage</b> deines Browsers — gebunden an dieses Gerät und diesen Browser, ohne automatischen Abgleich zwischen Handy und Rechner. Innerhalb der Claude-Vorschau kann das unzuverlässig sein; einmal heruntergeladen und lokal geöffnet oder z. B. auf GitHub Pages gehostet, bleibt es zuverlässig über Neustarts hinweg erhalten.</p>
+      </div>
+
+      <div class="glossary-section">
+        <h3>KI-Funktionen: Eselsbrücke &amp; Karten aus Text</h3>
+        <p><b>„Eselsbrücke vorschlagen"</b> ruft Claude im Hintergrund auf und schlägt eine Merkhilfe für den gerade eingetragenen Begriff vor — landet im Eselsbrücken-Feld und ist frei editierbar, bevor du speicherst. Sie erscheint später beim Lernen auf der Kartenrückseite.</p>
+        <p style="margin-top:8px;"><b>„Mehrere Karten aus Text erzeugen"</b> schickt einen eingefügten Text an Claude, der daraus Begriff-Definition-Paare vorschlägt. Nichts wird automatisch gespeichert: Du siehst eine Liste zum Prüfen, kannst einzelne Vorschläge abwählen oder Text korrigieren, bevor du sie übernimmst.</p>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script>
+const STORAGE_KEY = 'vocab-cards';
+const BOX_INTERVAL_DAYS = {1:1, 2:3, 3:7, 4:14, 5:30};
+const CAT_LABEL = {englisch:'Englisch', isaqb:'iSAQB', sonstiges:'Sonstiges'};
+const CAT_COLOR_VAR = {englisch:'--cat-englisch', isaqb:'--cat-isaqb', sonstiges:'--cat-sonstiges'};
+const BOX_LABEL = {1:'Box 1 · täglich', 2:'Box 2 · alle 3 Tage', 3:'Box 3 · wöchentlich', 4:'Box 4 · alle 2 Wochen', 5:'Box 5 · gemeistert'};
+
+let cards = [];
+let selectedCat = 'englisch';
+let selectedBatchCat = 'englisch';
+let session = { queue: [], index: 0, correctCount: 0, total: 0 };
+let overviewFilter = 'alle';
+let selectedLearnCat = 'alle';
+
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function uid(){ return 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+function daysFromNow(d){ return Date.now() + d*24*60*60*1000; }
+
+function loadCards(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    cards = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    console.error('Laden fehlgeschlagen', e);
+    cards = [];
+  }
+}
+function persistCards(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  }catch(e){
+    console.error('Speichern fehlgeschlagen', e);
+  }
+}
+
+function renderHeaderStat(){
+  const due = cards.filter(c => c.nextReview <= Date.now()).length;
+  document.getElementById('headerStat').innerHTML =
+    `${cards.length} Karten · <b>${due} fällig</b>`;
+}
+
+/* ---------- ERFASSEN ---------- */
+document.querySelectorAll('#mainCatRow .cat-choice').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('#mainCatRow .cat-choice').forEach(x=>x.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCat = el.dataset.cat;
+  });
+});
+
+document.querySelectorAll('#batchCatRow .cat-choice').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('#batchCatRow .cat-choice').forEach(x=>x.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedBatchCat = el.dataset.cat;
+  });
+});
+
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  const term = document.getElementById('f-term').value.trim();
+  const def = document.getElementById('f-def').value.trim();
+  const ex = document.getElementById('f-ex').value.trim();
+  const mnemonic = document.getElementById('f-mnemonic').value.trim();
+  if(!term || !def){
+    document.getElementById(term ? 'f-def' : 'f-term').focus();
+    return;
+  }
+  const card = {
+    id: uid(),
+    term, definition: def, example: ex, mnemonic,
+    category: selectedCat,
+    box: 1,
+    nextReview: Date.now(),
+    createdAt: Date.now()
+  };
+  cards.unshift(card);
+  await persistCards();
+  document.getElementById('f-term').value = '';
+  document.getElementById('f-def').value = '';
+  document.getElementById('f-ex').value = '';
+  document.getElementById('f-mnemonic').value = '';
+  document.getElementById('mnemonicStatus').textContent = '';
+  document.getElementById('f-term').focus();
+  const toast = document.getElementById('saveToast');
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 1600);
+  renderHeaderStat();
+  renderRecent();
+});
+
+function renderRecent(){
+  const list = document.getElementById('recentList');
+  const recent = cards.slice(0,5);
+  if(recent.length===0){
+    list.innerHTML = '<div class="loading">Noch keine Karten erfasst.</div>';
+    return;
+  }
+  list.innerHTML = recent.map(c=>`
+    <div class="mini-card">
+      <span class="tab-dot" style="background:var(${CAT_COLOR_VAR[c.category]})"></span>
+      <span class="term">${escapeHtml(c.term)}</span>
+      <span class="def">${escapeHtml(c.definition)}</span>
+      <button class="mini-del" data-id="${c.id}" title="Löschen">✕</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.mini-del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      cards = cards.filter(c=>c.id !== btn.dataset.id);
+      await persistCards();
+      renderRecent(); renderHeaderStat(); renderOverview(); renderDueSummary();
+    });
+  });
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+/* ---------- KI: Anthropic API Helper ---------- */
+async function callClaude(userText, maxTokens){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: maxTokens || 1000,
+      messages: [{ role: "user", content: userText }]
+    })
+  });
+  const data = await response.json();
+  const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+  if(textBlocks.length === 0){
+    throw new Error('Keine Textantwort erhalten');
+  }
+  return textBlocks.join('\n');
+}
+
+/* ---------- KI: Eselsbrücke für Einzelkarte ---------- */
+document.getElementById('mnemonicBtn').addEventListener('click', async ()=>{
+  const term = document.getElementById('f-term').value.trim();
+  const def = document.getElementById('f-def').value.trim();
+  const status = document.getElementById('mnemonicStatus');
+  const btn = document.getElementById('mnemonicBtn');
+  if(!term || !def){
+    status.textContent = 'Bitte zuerst Begriff und Definition ausfüllen.';
+    status.style.color = 'var(--danger)';
+    return;
+  }
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Generiere…';
+  status.textContent = '';
+  try{
+    const prompt = `Erstelle eine kurze, einprägsame Eselsbrücke oder ein bildhaftes Merkbild auf Deutsch für folgenden Lernbegriff. Antworte NUR mit der Eselsbrücke selbst (maximal 2 Sätze), ohne Einleitung, ohne Anführungszeichen.
+
+Kategorie: ${CAT_LABEL[selectedCat]}
+Begriff: ${term}
+Bedeutung: ${def}`;
+    const result = await callClaude(prompt, 300);
+    document.getElementById('f-mnemonic').value = result.trim();
+    status.textContent = '✓ Vorschlag eingefügt — passe ihn bei Bedarf noch an.';
+    status.style.color = 'var(--teal)';
+  }catch(e){
+    console.error('Eselsbrücke fehlgeschlagen', e);
+    status.textContent = 'Fehler beim Generieren. Bitte nochmal versuchen.';
+    status.style.color = 'var(--danger)';
+  }
+  btn.disabled = false;
+  btn.textContent = originalLabel;
+});
+
+/* ---------- KI: Mehrere Karten aus Text ---------- */
+document.getElementById('batchGenBtn').addEventListener('click', async ()=>{
+  const textVal = document.getElementById('batch-text').value.trim();
+  const status = document.getElementById('batchStatus');
+  const btn = document.getElementById('batchGenBtn');
+  const resultsEl = document.getElementById('batchResults');
+  status.style.display = 'block';
+  if(!textVal){
+    status.textContent = 'Bitte zuerst einen Text einfügen.';
+    status.style.color = 'var(--danger)';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Generiere Vorschläge…';
+  status.textContent = '';
+  resultsEl.innerHTML = '';
+  try{
+    const prompt = `Du bekommst einen Text. Extrahiere daraus geeignete Lernkarten: Begriff plus kurze Definition oder Übersetzung, optional ein passendes Beispiel aus dem Text. Fokussiere auf Fachbegriffe, wichtige Vokabeln oder Kernaussagen, keine trivialen Wörter. Erzeuge maximal 12 Karten.
+
+Antworte AUSSCHLIESSLICH mit einem JSON-Array in genau diesem Format, ohne Einleitung, ohne Markdown-Codeblock:
+[{"term": "...", "definition": "...", "example": "..."}]
+
+Wenn kein passendes Beispiel im Text steht, setze "example" auf einen leeren String.
+
+Text:
+"""${textVal}"""`;
+    const raw = await callClaude(prompt, 1800);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    if(!Array.isArray(parsed) || parsed.length === 0){
+      status.textContent = 'Keine passenden Karten gefunden. Versuch es mit einem anderen Text.';
+      status.style.color = 'var(--danger)';
+    } else {
+      status.style.display = 'none';
+      renderBatchResults(parsed);
+    }
+  }catch(e){
+    console.error('Batch-Generierung fehlgeschlagen', e);
+    status.textContent = 'Fehler beim Generieren. Bitte nochmal versuchen.';
+    status.style.color = 'var(--danger)';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Vorschläge generieren';
+});
+
+function renderBatchResults(suggestions){
+  const el = document.getElementById('batchResults');
+  el.innerHTML = `
+    <div class="suggest-toolbar reset-confirm-text">${suggestions.length} Vorschläge — Häkchen entfernen, um einzelne auszuschließen, Text vor dem Speichern editierbar</div>
+    ${suggestions.map((s,i)=>`
+      <div class="suggest-row" data-idx="${i}">
+        <input type="checkbox" class="suggest-check" checked>
+        <div class="suggest-fields">
+          <input type="text" class="suggest-term" value="${escapeAttr(s.term||'')}" placeholder="Begriff">
+          <input type="text" class="suggest-def" value="${escapeAttr(s.definition||'')}" placeholder="Definition">
+          <input type="text" class="suggest-example" value="${escapeAttr(s.example||'')}" placeholder="Beispiel (optional)">
+        </div>
+      </div>
+    `).join('')}
+    <button class="btn btn-primary btn-block" id="batchSaveBtn" type="button">Ausgewählte Karten speichern</button>
+  `;
+  document.getElementById('batchSaveBtn').addEventListener('click', saveBatchResults);
+}
+
+function saveBatchResults(){
+  const rows = document.querySelectorAll('#batchResults .suggest-row');
+  let added = 0;
+  rows.forEach(row=>{
+    const checked = row.querySelector('.suggest-check').checked;
+    if(!checked) return;
+    const term = row.querySelector('.suggest-term').value.trim();
+    const definition = row.querySelector('.suggest-def').value.trim();
+    const example = row.querySelector('.suggest-example').value.trim();
+    if(!term || !definition) return;
+    cards.unshift({
+      id: uid(),
+      term, definition, example, mnemonic: '',
+      category: selectedBatchCat,
+      box: 1,
+      nextReview: Date.now(),
+      createdAt: Date.now()
+    });
+    added++;
+  });
+  persistCards();
+  document.getElementById('batchResults').innerHTML = '';
+  document.getElementById('batch-text').value = '';
+  const status = document.getElementById('batchStatus');
+  status.style.display = 'block';
+  status.style.color = 'var(--teal)';
+  status.textContent = `✓ ${added} Karten gespeichert.`;
+  renderHeaderStat();
+  renderRecent();
+  renderDueSummary();
+}
+
+/* ---------- TABS ---------- */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'lernen'){ resetSessionView(); renderDueSummary(); }
+    if(btn.dataset.tab === 'uebersicht'){ renderOverview(); }
+  });
+});
+
+/* ---------- LERNEN ---------- */
+document.querySelectorAll('#learnCatRow .filter-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#learnCatRow .filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    selectedLearnCat = chip.dataset.learncat;
+    renderDueSummary();
+  });
+});
+
+function cardsInScope(){
+  return selectedLearnCat === 'alle' ? cards : cards.filter(c=>c.category === selectedLearnCat);
+}
+
+function renderDueSummary(){
+  const now = Date.now();
+  const scope = cardsInScope();
+  const byCategory = {englisch:0, isaqb:0, sonstiges:0};
+  let total = 0;
+  scope.forEach(c=>{
+    if(c.nextReview <= now){ byCategory[c.category]++; total++; }
+  });
+  const el = document.getElementById('dueSummary');
+  const chipsHtml = selectedLearnCat === 'alle' ? `
+    <div class="due-chip"><span class="n" style="color:var(--cat-englisch)">${byCategory.englisch}</span>Englisch</div>
+    <div class="due-chip"><span class="n" style="color:var(--cat-isaqb)">${byCategory.isaqb}</span>iSAQB</div>
+    <div class="due-chip"><span class="n" style="color:var(--cat-sonstiges)">${byCategory.sonstiges}</span>Sonstiges</div>
+  ` : '';
+  el.innerHTML = `
+    <div class="due-chip total"><span class="n">${total}</span>fällig${selectedLearnCat==='alle' ? ' gesamt' : ' · '+CAT_LABEL[selectedLearnCat]}</div>
+    ${chipsHtml}
+  `;
+  renderLearnActions(total, scope.length);
+}
+
+function renderLearnActions(dueCount, scopeLength){
+  const el = document.getElementById('learnActions');
+  if(dueCount > 0){
+    el.innerHTML = `<button class="btn btn-primary btn-block" id="startSessionBtn">Sitzung starten</button>`;
+  } else if(scopeLength > 0){
+    el.innerHTML = `
+      <div class="empty-state" style="padding:22px 16px;">
+        <div class="big" style="font-size:16px;">Für heute nichts fällig 🎉</div>
+        <p style="margin-bottom:14px;">Komm morgen wieder — oder übe freiwillig ein paar Karten, die eigentlich erst später dran wären.</p>
+        <button class="btn btn-ghost btn-block" id="freePracticeBtn">Trotzdem ${Math.min(10, scopeLength)} Karten üben</button>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:22px 16px;">
+        <div class="big" style="font-size:16px;">Noch keine Karten vorhanden</div>
+        <p>Erfasse zuerst ein paar Begriffe im Tab „Erfassen“.</p>
+      </div>`;
+  }
+  const startBtn = document.getElementById('startSessionBtn');
+  if(startBtn) startBtn.addEventListener('click', ()=>startSession(false));
+  const freeBtn = document.getElementById('freePracticeBtn');
+  if(freeBtn) freeBtn.addEventListener('click', ()=>startSession(true));
+}
+
+function resetSessionView(){
+  document.getElementById('lernenPre').style.display = 'block';
+  document.getElementById('sessionArea').style.display = 'none';
+  document.getElementById('doneArea').style.display = 'none';
+}
+
+function startSession(forceFree){
+  const now = Date.now();
+  const scope = cardsInScope();
+  let due = scope.filter(c => c.nextReview <= now);
+  if(forceFree){
+    due = [...scope].sort(()=>Math.random()-0.5).slice(0,10);
+  }
+  if(due.length === 0){
+    const catText = selectedLearnCat === 'alle' ? '' : ' in der Kategorie „' + CAT_LABEL[selectedLearnCat] + '“';
+    document.getElementById('lernenPre').innerHTML = `
+      <div class="empty-state">
+        <div class="big">Noch keine Karten vorhanden${catText}</div>
+        <p>Erfasse zuerst ein paar Begriffe im Tab „Erfassen“.</p>
+      </div>`;
+    return;
+  }
+  due = due.sort(()=>Math.random()-0.5); // Interleaving der Kategorien
+  session = { queue: due, index: 0, correctCount: 0, total: due.length, extraInserted: 0 };
+  document.getElementById('lernenPre').style.display = 'none';
+  document.getElementById('doneArea').style.display = 'none';
+  document.getElementById('sessionArea').style.display = 'flex';
+  showCurrentCard();
+}
+
+document.getElementById('abortSessionBtn').addEventListener('click', ()=>{
+  resetSessionView();
+  renderDueSummary();
+});
+
+function showCurrentCard(){
+  const flashcard = document.getElementById('flashcard');
+  flashcard.classList.remove('flipped');
+  document.getElementById('rateRow').style.display = 'none';
+  document.getElementById('flipHint').style.display = 'block';
+
+  const c = session.queue[session.index];
+  document.getElementById('progressLine').textContent =
+    `Karte ${session.index+1} von ${session.queue.length}`;
+
+  const frontTermEl = document.getElementById('frontTerm');
+  frontTermEl.textContent = c.term;
+  frontTermEl.classList.toggle('compact', c.term.length > 26);
+  document.getElementById('frontCatTab').textContent = CAT_LABEL[c.category];
+  document.getElementById('frontCatTab').style.background = `var(${CAT_COLOR_VAR[c.category]})`;
+  document.getElementById('frontBoxTag').textContent = 'Box ' + c.box;
+  document.getElementById('frontContent').classList.toggle('is-long', c.term.length > 26);
+
+  const defEl = document.getElementById('backDef');
+  const exEl = document.getElementById('backExample');
+  const defIsLong = c.definition.length > 70 || (c.example && c.example.length > 60);
+  document.getElementById('backTerm').textContent = c.term;
+  defEl.textContent = c.definition;
+  defEl.classList.toggle('compact', defIsLong);
+  exEl.textContent = c.example ? '„' + c.example + '“' : '';
+  exEl.classList.toggle('compact', defIsLong);
+  document.getElementById('backMnemonic').textContent = c.mnemonic ? '💡 ' + c.mnemonic : '';
+  document.getElementById('backContent').classList.toggle('is-long', defIsLong);
+  document.getElementById('backCatTab').textContent = CAT_LABEL[c.category];
+  document.getElementById('backCatTab').style.background = `var(${CAT_COLOR_VAR[c.category]})`;
+
+  sizeFlashcardToContent();
+}
+
+function sizeFlashcardToContent(){
+  const flashcard = document.getElementById('flashcard');
+  // Kurz warten, bis DOM-Text gesetzt ist, dann tatsächliche Inhaltshöhe messen
+  requestAnimationFrame(()=>{
+    const frontNeeded = document.getElementById('frontContent').scrollHeight + 42; // + top/bottom padding
+    const backNeeded = document.getElementById('backContent').scrollHeight + 42;
+    const needed = Math.max(220, frontNeeded, backNeeded);
+    const capped = Math.min(needed, window.innerHeight * 0.7, 520);
+    flashcard.style.height = capped + 'px';
+  });
+}
+
+window.addEventListener('resize', ()=>{
+  if(document.getElementById('sessionArea').style.display !== 'none'){
+    sizeFlashcardToContent();
+  }
+});
+
+document.getElementById('flashcard').addEventListener('click', ()=>{
+  const flashcard = document.getElementById('flashcard');
+  if(!flashcard.classList.contains('flipped')){
+    flashcard.classList.add('flipped');
+    document.getElementById('rateRow').style.display = 'flex';
+    document.getElementById('flipHint').style.display = 'none';
+  }
+});
+
+document.querySelectorAll('.rate-btn').forEach(btn=>{
+  btn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    await rateCurrentCard(btn.dataset.rate);
+  });
+});
+
+async function rateCurrentCard(rating){
+  const c = session.queue[session.index];
+  const interval = BOX_INTERVAL_DAYS;
+  if(rating === 'again'){
+    c.box = 1;
+    c.nextReview = Date.now(); // bleibt heute fällig, bis sie sauber gewusst wird
+    // erneut später in dieser Sitzung einstreuen
+    const reinsertAt = Math.min(session.queue.length, session.index + 3 + Math.floor(Math.random()*3));
+    session.queue.splice(reinsertAt, 0, c);
+  } else if(rating === 'hard'){
+    c.nextReview = daysFromNow(Math.max(1, interval[c.box]*0.5));
+    session.correctCount++;
+  } else if(rating === 'good'){
+    c.box = Math.min(5, c.box+1);
+    c.nextReview = daysFromNow(interval[c.box]);
+    session.correctCount++;
+  } else if(rating === 'easy'){
+    c.box = Math.min(5, c.box+2);
+    c.nextReview = daysFromNow(interval[c.box]);
+    session.correctCount++;
+  }
+  // im echten Datensatz aktualisieren
+  const idx = cards.findIndex(x=>x.id === c.id);
+  if(idx>-1) cards[idx] = c;
+  await persistCards();
+  renderHeaderStat();
+
+  session.index++;
+  if(session.index >= session.queue.length){
+    finishSession();
+  } else {
+    showCurrentCard();
+  }
+}
+
+function finishSession(){
+  document.getElementById('sessionArea').style.display = 'none';
+  document.getElementById('doneArea').style.display = 'block';
+  document.getElementById('doneStats').textContent =
+    `${session.total} Karten wiederholt.`;
+  renderDueSummary();
+}
+
+document.getElementById('backToOverviewBtn').addEventListener('click', ()=>{
+  resetSessionView();
+  renderDueSummary();
+});
+
+/* ---------- ÜBERSICHT ---------- */
+document.querySelectorAll('.filter-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    overviewFilter = chip.dataset.filter;
+    renderOverview();
+  });
+});
+
+function renderOverview(){
+  renderResetArea(false);
+  // Box-Visualisierung
+  const counts = {1:0,2:0,3:0,4:0,5:0};
+  cards.forEach(c=> counts[c.box]++);
+  const max = Math.max(1, ...Object.values(counts));
+  const viz = document.getElementById('boxesViz');
+  viz.innerHTML = [5,4,3,2,1].map(b=>{
+    const pct = Math.max(8, (counts[b]/max)*100);
+    return `
+    <div class="box-row">
+      <div class="box-label">${BOX_LABEL[b]}</div>
+      <div class="box-track">
+        <div class="box-fill" style="width:${pct}%; background:var(--box${b});">${counts[b]}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Liste
+  let filtered = overviewFilter==='alle' ? cards : cards.filter(c=>c.category===overviewFilter);
+  filtered = [...filtered].sort((a,b)=>a.nextReview-b.nextReview);
+  const listEl = document.getElementById('fullList');
+  if(filtered.length===0){
+    listEl.innerHTML = '<div class="loading">Keine Karten in dieser Kategorie.</div>';
+    return;
+  }
+  listEl.innerHTML = filtered.map(c=>{
+    const due = c.nextReview <= Date.now();
+    const dateStr = due ? 'fällig' : new Date(c.nextReview).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+    return `
+    <div class="list-card">
+      <span class="tab-dot" style="background:var(${CAT_COLOR_VAR[c.category]})"></span>
+      <div class="info">
+        <div class="term">${escapeHtml(c.term)}</div>
+        <div class="def">${escapeHtml(c.definition)}</div>
+      </div>
+      <div class="meta">Box ${c.box}<br>${dateStr}</div>
+      <button class="mini-del" data-id="${c.id}" title="Löschen">✕</button>
+    </div>`;
+  }).join('');
+  listEl.querySelectorAll('.mini-del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      cards = cards.filter(c=>c.id !== btn.dataset.id);
+      await persistCards();
+      renderOverview(); renderHeaderStat(); renderRecent(); renderDueSummary();
+    });
+  });
+}
+
+function renderResetArea(confirming){
+  const el = document.getElementById('resetArea');
+  if(cards.length === 0){
+    el.innerHTML = '';
+    return;
+  }
+  if(!confirming){
+    el.innerHTML = `<button class="link-btn danger" id="resetProgressBtn">Lernstand zurücksetzen</button>`;
+    document.getElementById('resetProgressBtn').addEventListener('click', ()=> renderResetArea(true));
+  } else {
+    el.innerHTML = `
+      <span class="reset-confirm-text">Sicher? Boxen &amp; Fälligkeit werden zurückgesetzt.</span>
+      <button class="link-btn danger" id="resetConfirmBtn">Ja, zurücksetzen</button>
+      <button class="link-btn" id="resetCancelBtn">Abbrechen</button>
+    `;
+    document.getElementById('resetConfirmBtn').addEventListener('click', doResetProgress);
+    document.getElementById('resetCancelBtn').addEventListener('click', ()=> renderResetArea(false));
+  }
+}
+
+function doResetProgress(){
+  cards = cards.map(c => ({ ...c, box: 1, nextReview: Date.now() }));
+  persistCards();
+  renderHeaderStat();
+  renderRecent();
+  renderDueSummary();
+  renderOverview();
+}
+
+/* ---------- INIT ---------- */
+(async function init(){
+  await loadCards();
+  renderHeaderStat();
+  renderRecent();
+  renderDueSummary();
+  renderOverview();
+})();
+</script>
+</body>
+</html>
