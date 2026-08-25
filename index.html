@@ -255,6 +255,26 @@
   .mini-card .def{ color: var(--ink-soft); flex:1; }
   .mini-del{ cursor:pointer; color: var(--ink-soft); border:none; background:none; font-size:16px; padding:2px 6px; }
   .mini-del:hover{ color: var(--danger); }
+  .mini-edit{ cursor:pointer; color: var(--ink-soft); border:none; background:none; font-size:14px; padding:2px 6px; }
+  .mini-edit:hover{ color: var(--teal); }
+
+  .edit-form{
+    width:100%;
+    background:#fff;
+    border:1.5px solid var(--teal);
+    border-radius:8px;
+    padding:14px;
+    margin-bottom:8px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .edit-form input[type=text], .edit-form textarea{ font-size:14px; }
+  .edit-form textarea{ min-height:44px; }
+  .edit-cat-row{ margin-top:2px; }
+  .edit-warning{ font-size:12px; color: var(--danger); font-family:'IBM Plex Mono', monospace; }
+  .edit-actions{ display:flex; gap:8px; margin-top:2px; }
+  .edit-actions .btn{ flex:1; padding:9px 14px; font-size:13px; }
 
   /* --- Lernen --- */
   .due-summary{
@@ -787,6 +807,11 @@
       </div>
 
       <div class="glossary-section">
+        <h3>Karten bearbeiten</h3>
+        <p>Über das ✏️-Symbol bei „Zuletzt erfasst" oder in der Übersicht-Liste lässt sich jede Karte nachträglich korrigieren — Begriff, Definition, Beispiel, Eselsbrücke und Kategorie. Der Lernfortschritt (Box, nächstes Wiederholungsdatum) bleibt dabei unverändert, es wird nur der Inhalt angepasst.</p>
+      </div>
+
+      <div class="glossary-section">
         <h3>KI-Funktionen: Eselsbrücke &amp; Karten aus Text</h3>
         <p><b>„Eselsbrücke vorschlagen"</b> ruft Claude im Hintergrund auf und schlägt eine Merkhilfe für den gerade eingetragenen Begriff vor — landet im Eselsbrücken-Feld und ist frei editierbar, bevor du speicherst. Sie erscheint später beim Lernen auf der Kartenrückseite.</p>
         <p style="margin-top:8px;"><b>„Mehrere Karten aus Text erzeugen"</b> schickt einen eingefügten Text an Claude, der daraus Begriff-Definition-Paare vorschlägt. Nichts wird automatisch gespeichert: Du siehst eine Liste zum Prüfen, kannst einzelne Vorschläge abwählen oder Text korrigieren, bevor du sie übernimmst.</p>
@@ -809,6 +834,7 @@ let selectedBatchCat = 'englisch';
 let session = { queue: [], index: 0, correctCount: 0, total: 0 };
 let overviewFilter = 'alle';
 let selectedLearnCat = 'alle';
+let editingCardId = null;
 
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function uid(){ return 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
@@ -886,6 +912,64 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   renderRecent();
 });
 
+function editFormHtml(c){
+  return `
+    <div class="edit-form" data-editid="${c.id}">
+      <input type="text" class="edit-term" value="${escapeAttr(c.term)}" placeholder="Begriff">
+      <textarea class="edit-def" placeholder="Definition">${escapeHtml(c.definition)}</textarea>
+      <textarea class="edit-ex" placeholder="Beispiel (optional)">${escapeHtml(c.example||'')}</textarea>
+      <textarea class="edit-mnemonic" placeholder="Eselsbrücke (optional)">${escapeHtml(c.mnemonic||'')}</textarea>
+      <div class="cat-row edit-cat-row">
+        <div class="cat-choice ${c.category==='englisch'?'selected':''}" data-cat="englisch">Englisch</div>
+        <div class="cat-choice ${c.category==='isaqb'?'selected':''}" data-cat="isaqb">iSAQB</div>
+        <div class="cat-choice ${c.category==='sonstiges'?'selected':''}" data-cat="sonstiges">Sonstiges</div>
+      </div>
+      <div class="edit-warning" style="display:none;"></div>
+      <div class="edit-actions">
+        <button class="btn btn-primary edit-save-btn" data-id="${c.id}" type="button">Speichern</button>
+        <button class="btn btn-ghost edit-cancel-btn" data-id="${c.id}" type="button">Abbrechen</button>
+      </div>
+    </div>
+  `;
+}
+
+function attachEditHandlers(scopeEl){
+  scopeEl.querySelectorAll('.edit-form').forEach(form=>{
+    form.querySelectorAll('.cat-choice').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        form.querySelectorAll('.cat-choice').forEach(x=>x.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+    });
+    form.querySelector('.edit-save-btn').addEventListener('click', function(){
+      const id = this.dataset.id;
+      const term = form.querySelector('.edit-term').value.trim();
+      const definition = form.querySelector('.edit-def').value.trim();
+      const example = form.querySelector('.edit-ex').value.trim();
+      const mnemonic = form.querySelector('.edit-mnemonic').value.trim();
+      const catEl = form.querySelector('.cat-choice.selected');
+      const category = catEl ? catEl.dataset.cat : 'sonstiges';
+      const warnEl = form.querySelector('.edit-warning');
+      if(!term || !definition){
+        warnEl.style.display = 'block';
+        warnEl.textContent = 'Begriff und Definition dürfen nicht leer sein.';
+        return;
+      }
+      const idx = cards.findIndex(c=>c.id === id);
+      if(idx > -1){
+        cards[idx] = { ...cards[idx], term, definition, example, mnemonic, category };
+      }
+      persistCards();
+      editingCardId = null;
+      renderRecent(); renderOverview(); renderHeaderStat(); renderDueSummary();
+    });
+    form.querySelector('.edit-cancel-btn').addEventListener('click', ()=>{
+      editingCardId = null;
+      renderRecent(); renderOverview();
+    });
+  });
+}
+
 function renderRecent(){
   const list = document.getElementById('recentList');
   const recent = cards.slice(0,5);
@@ -893,14 +977,18 @@ function renderRecent(){
     list.innerHTML = '<div class="loading">Noch keine Karten erfasst.</div>';
     return;
   }
-  list.innerHTML = recent.map(c=>`
+  list.innerHTML = recent.map(c=>{
+    if(c.id === editingCardId) return editFormHtml(c);
+    return `
     <div class="mini-card">
       <span class="tab-dot" style="background:var(${CAT_COLOR_VAR[c.category]})"></span>
       <span class="term">${escapeHtml(c.term)}</span>
       <span class="def">${escapeHtml(c.definition)}</span>
+      <button class="mini-edit" data-id="${c.id}" title="Bearbeiten">✏️</button>
       <button class="mini-del" data-id="${c.id}" title="Löschen">✕</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
   list.querySelectorAll('.mini-del').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       cards = cards.filter(c=>c.id !== btn.dataset.id);
@@ -908,6 +996,13 @@ function renderRecent(){
       renderRecent(); renderHeaderStat(); renderOverview(); renderDueSummary();
     });
   });
+  list.querySelectorAll('.mini-edit').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingCardId = btn.dataset.id;
+      renderRecent(); renderOverview();
+    });
+  });
+  attachEditHandlers(list);
 }
 
 function escapeHtml(s){
@@ -1325,6 +1420,7 @@ function renderOverview(){
     return;
   }
   listEl.innerHTML = filtered.map(c=>{
+    if(c.id === editingCardId) return editFormHtml(c);
     const due = c.nextReview <= Date.now();
     const dateStr = due ? 'fällig' : new Date(c.nextReview).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
     return `
@@ -1335,6 +1431,7 @@ function renderOverview(){
         <div class="def">${escapeHtml(c.definition)}</div>
       </div>
       <div class="meta">Box ${c.box}<br>${dateStr}</div>
+      <button class="mini-edit" data-id="${c.id}" title="Bearbeiten">✏️</button>
       <button class="mini-del" data-id="${c.id}" title="Löschen">✕</button>
     </div>`;
   }).join('');
@@ -1345,6 +1442,13 @@ function renderOverview(){
       renderOverview(); renderHeaderStat(); renderRecent(); renderDueSummary();
     });
   });
+  listEl.querySelectorAll('.mini-edit').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingCardId = btn.dataset.id;
+      renderOverview(); renderRecent();
+    });
+  });
+  attachEditHandlers(listEl);
 }
 
 function renderResetArea(confirming){
