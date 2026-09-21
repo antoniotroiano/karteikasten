@@ -26,6 +26,7 @@
     --box4: #5B8C86;
     --box5: #2F6F6A;
     --cat-englisch: #2F6F6A;
+    --cat-spanisch: #B66A3C;
     --cat-isaqb: #A85C3B;
     --cat-sonstiges: #55708A;
     --radius: 10px;
@@ -153,6 +154,7 @@
     user-select:none;
   }
   .cat-choice[data-cat="englisch"].selected{ background: var(--cat-englisch); color:#fff; border-color:var(--cat-englisch); }
+  .cat-choice[data-cat="spanisch"].selected{ background: var(--cat-spanisch); color:#fff; border-color:var(--cat-spanisch); }
   .cat-choice[data-cat="isaqb"].selected{ background: var(--cat-isaqb); color:#fff; border-color:var(--cat-isaqb); }
   .cat-choice[data-cat="sonstiges"].selected{ background: var(--cat-sonstiges); color:#fff; border-color:var(--cat-sonstiges); }
 
@@ -640,6 +642,7 @@
       <label>Kategorie</label>
       <div class="cat-row" id="mainCatRow">
         <div class="cat-choice selected" data-cat="englisch">Englisch</div>
+        <div class="cat-choice" data-cat="spanisch">Spanisch</div>
         <div class="cat-choice" data-cat="isaqb">iSAQB</div>
         <div class="cat-choice" data-cat="sonstiges">Sonstiges</div>
       </div>
@@ -665,6 +668,7 @@
       <label>Kategorie für alle Vorschläge</label>
       <div class="cat-row" id="batchCatRow">
         <div class="cat-choice selected" data-cat="englisch">Englisch</div>
+        <div class="cat-choice" data-cat="spanisch">Spanisch</div>
         <div class="cat-choice" data-cat="isaqb">iSAQB</div>
         <div class="cat-choice" data-cat="sonstiges">Sonstiges</div>
       </div>
@@ -689,6 +693,7 @@
       <div class="filter-row" id="learnCatRow">
         <div class="filter-chip active" data-learncat="alle">Alle</div>
         <div class="filter-chip" data-learncat="englisch">Englisch</div>
+        <div class="filter-chip" data-learncat="spanisch">Spanisch</div>
         <div class="filter-chip" data-learncat="isaqb">iSAQB</div>
         <div class="filter-chip" data-learncat="sonstiges">Sonstiges</div>
       </div>
@@ -747,6 +752,7 @@
     <div class="filter-row" id="filterRow">
       <div class="filter-chip active" data-filter="alle">Alle</div>
       <div class="filter-chip" data-filter="englisch">Englisch</div>
+      <div class="filter-chip" data-filter="spanisch">Spanisch</div>
       <div class="filter-chip" data-filter="isaqb">iSAQB</div>
       <div class="filter-chip" data-filter="sonstiges">Sonstiges</div>
     </div>
@@ -792,7 +798,7 @@
 
       <div class="glossary-section">
         <h3>Kategorien &amp; Mischen (Interleaving)</h3>
-        <p>Englisch-Vokabeln, iSAQB-Begriffe und Sonstiges kannst du getrennt oder gemischt lernen (Filter oben im Tab „Lernen"). Bei „Alle" werden fällige Karten aus allen Kategorien zufällig gemischt statt block­weise abgefragt — das nennt man Interleaving, es hilft dem Gehirn, Begriffe wirklich zu unterscheiden statt sie nur in Reihenfolge auswendig zu lernen.</p>
+        <p>Englisch- und Spanisch-Vokabeln, iSAQB-Begriffe und Sonstiges kannst du getrennt oder gemischt lernen (Filter oben im Tab „Lernen"). Bei „Alle" werden fällige Karten aus allen Kategorien zufällig gemischt statt block­weise abgefragt — das nennt man Interleaving, es hilft dem Gehirn, Begriffe wirklich zu unterscheiden statt sie nur in Reihenfolge auswendig zu lernen.</p>
       </div>
 
       <div class="glossary-section">
@@ -833,10 +839,10 @@
 <script>
 const STORAGE_KEY = 'vocab-cards';
 const DAILY_STATS_KEY = 'vocab-daily-stats';
-const DAILY_LIMIT = 8;
+const SESSION_LIMIT = 8;
 const BOX_INTERVAL_DAYS = {1:1, 2:3, 3:7, 4:14, 5:30};
-const CAT_LABEL = {englisch:'Englisch', isaqb:'iSAQB', sonstiges:'Sonstiges'};
-const CAT_COLOR_VAR = {englisch:'--cat-englisch', isaqb:'--cat-isaqb', sonstiges:'--cat-sonstiges'};
+const CAT_LABEL = {englisch:'Englisch', spanisch:'Spanisch', isaqb:'iSAQB', sonstiges:'Sonstiges'};
+const CAT_COLOR_VAR = {englisch:'--cat-englisch', spanisch:'--cat-spanisch', isaqb:'--cat-isaqb', sonstiges:'--cat-sonstiges'};
 const BOX_LABEL = {1:'Box 1 · täglich', 2:'Box 2 · alle 3 Tage', 3:'Box 3 · wöchentlich', 4:'Box 4 · alle 2 Wochen', 5:'Box 5 · gemeistert'};
 
 let cards = [];
@@ -890,14 +896,9 @@ function todayLearnedCount(){
   return todayLearnedIds().size;
 }
 
-function remainingToday(){
-  return Math.max(0, DAILY_LIMIT - todayLearnedCount());
-}
-
 function markCardLearnedToday(cardId){
   const stats = loadDailyStats();
   if(stats.cardIds.includes(cardId)) return;
-  if(stats.cardIds.length >= DAILY_LIMIT) return;
   stats.cardIds.push(cardId);
   persistDailyStats(stats);
 }
@@ -997,6 +998,18 @@ document.querySelectorAll('#batchCatRow .cat-choice').forEach(el=>{
   });
 });
 
+function hasDuplicateTerm(term, exceptId = null){
+  return cards.some(c => c.term === term && c.id !== exceptId);
+}
+
+function showSaveToast(message, success){
+  const toast = document.getElementById('saveToast');
+  toast.textContent = message;
+  toast.style.color = success ? 'var(--teal)' : 'var(--danger)';
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2200);
+}
+
 document.getElementById('saveBtn').addEventListener('click', async ()=>{
   const term = document.getElementById('f-term').value.trim();
   const def = document.getElementById('f-def').value.trim();
@@ -1004,6 +1017,11 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   const mnemonic = document.getElementById('f-mnemonic').value.trim();
   if(!term || !def){
     document.getElementById(term ? 'f-def' : 'f-term').focus();
+    return;
+  }
+  if(hasDuplicateTerm(term)){
+    showSaveToast('⚠️ Dieses Wort ist bereits vorhanden.', false);
+    document.getElementById('f-term').focus();
     return;
   }
   const card = {
@@ -1022,9 +1040,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   document.getElementById('f-mnemonic').value = '';
   document.getElementById('mnemonicStatus').textContent = '';
   document.getElementById('f-term').focus();
-  const toast = document.getElementById('saveToast');
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'), 1600);
+  showSaveToast('✓ Gespeichert — direkt weiter erfassen', true);
   renderHeaderStat();
   renderRecent();
 });
@@ -1038,6 +1054,7 @@ function editFormHtml(c){
       <textarea class="edit-mnemonic" placeholder="Eselsbrücke (optional)">${escapeHtml(c.mnemonic||'')}</textarea>
       <div class="cat-row edit-cat-row">
         <div class="cat-choice ${c.category==='englisch'?'selected':''}" data-cat="englisch">Englisch</div>
+        <div class="cat-choice ${c.category==='spanisch'?'selected':''}" data-cat="spanisch">Spanisch</div>
         <div class="cat-choice ${c.category==='isaqb'?'selected':''}" data-cat="isaqb">iSAQB</div>
         <div class="cat-choice ${c.category==='sonstiges'?'selected':''}" data-cat="sonstiges">Sonstiges</div>
       </div>
@@ -1070,6 +1087,11 @@ function attachEditHandlers(scopeEl){
       if(!term || !definition){
         warnEl.style.display = 'block';
         warnEl.textContent = 'Begriff und Definition dürfen nicht leer sein.';
+        return;
+      }
+      if(hasDuplicateTerm(term, id)){
+        warnEl.style.display = 'block';
+        warnEl.textContent = 'Dieses Wort ist bereits vorhanden.';
         return;
       }
       const idx = cards.findIndex(c=>c.id === id);
@@ -1249,6 +1271,9 @@ function renderBatchResults(suggestions){
 function saveBatchResults(){
   const rows = document.querySelectorAll('#batchResults .suggest-row');
   let added = 0;
+  let skippedDuplicates = 0;
+  const termsToAdd = new Set();
+
   rows.forEach(row=>{
     const checked = row.querySelector('.suggest-check').checked;
     if(!checked) return;
@@ -1256,6 +1281,12 @@ function saveBatchResults(){
     const definition = row.querySelector('.suggest-def').value.trim();
     const example = row.querySelector('.suggest-example').value.trim();
     if(!term || !definition) return;
+
+    if(hasDuplicateTerm(term) || termsToAdd.has(term)){
+      skippedDuplicates++;
+      return;
+    }
+
     cards.unshift({
       id: uid(),
       term, definition, example, mnemonic: '',
@@ -1264,15 +1295,19 @@ function saveBatchResults(){
       nextReview: Date.now(),
       createdAt: Date.now()
     });
+    termsToAdd.add(term);
     added++;
   });
+
   persistCards();
   document.getElementById('batchResults').innerHTML = '';
   document.getElementById('batch-text').value = '';
   const status = document.getElementById('batchStatus');
   status.style.display = 'block';
-  status.style.color = 'var(--teal)';
-  status.textContent = `✓ ${added} Karten gespeichert.`;
+  status.style.color = skippedDuplicates > 0 ? 'var(--clay)' : 'var(--teal)';
+  status.textContent = skippedDuplicates > 0
+    ? `✓ ${added} Karten gespeichert · ${skippedDuplicates} Duplikat(e) übersprungen.`
+    : `✓ ${added} Karten gespeichert.`;
   renderHeaderStat();
   renderRecent();
   renderDueSummary();
@@ -1307,7 +1342,7 @@ function cardsInScope(){
 function renderDueSummary(){
   const now = Date.now();
   const scope = cardsInScope();
-  const byCategory = {englisch:0, isaqb:0, sonstiges:0};
+  const byCategory = {englisch:0, spanisch:0, isaqb:0, sonstiges:0};
   let total = 0;
   scope.forEach(c=>{
     if(c.nextReview <= now && !todayLearnedIds().has(c.id)){ byCategory[c.category]++; total++; }
@@ -1315,6 +1350,7 @@ function renderDueSummary(){
   const el = document.getElementById('dueSummary');
   const chipsHtml = selectedLearnCat === 'alle' ? `
     <div class="due-chip"><span class="n" style="color:var(--cat-englisch)">${byCategory.englisch}</span>Englisch</div>
+    <div class="due-chip"><span class="n" style="color:var(--cat-spanisch)">${byCategory.spanisch}</span>Spanisch</div>
     <div class="due-chip"><span class="n" style="color:var(--cat-isaqb)">${byCategory.isaqb}</span>iSAQB</div>
     <div class="due-chip"><span class="n" style="color:var(--cat-sonstiges)">${byCategory.sonstiges}</span>Sonstiges</div>
   ` : '';
@@ -1327,24 +1363,34 @@ function renderDueSummary(){
 
 function renderLearnActions(dueCount, scopeLength){
   const el = document.getElementById('learnActions');
-  const slots = remainingToday();
-  const sessionSize = Math.min(DAILY_LIMIT, slots, dueCount > 0 ? dueCount : scopeLength);
+  const learnedToday = todayLearnedCount();
+  const availableCount = cardsInScope().filter(c => !todayLearnedIds().has(c.id)).length;
+  const sessionSize = Math.min(SESSION_LIMIT, dueCount);
+  const freeCount = Math.min(SESSION_LIMIT, availableCount);
 
-  if(slots <= 0){
-    el.innerHTML = `
-      <div class="empty-state" style="padding:22px 16px;">
-        <div class="big" style="font-size:16px;">Tagesziel erreicht 🎉</div>
-        <p>Heute sind bereits ${DAILY_LIMIT} verschiedene Karten gelernt. Morgen werden automatisch die nächsten fälligen Karten ausgewählt.</p>
-      </div>`;
-  } else if(dueCount > 0){
-    el.innerHTML = `<button class="btn btn-primary btn-block" id="startSessionBtn">Sitzung starten · ${sessionSize} Karten</button>`;
-  } else if(scopeLength > 0){
-    const freeCount = Math.min(DAILY_LIMIT, slots, scopeLength);
+  if(dueCount > 0){
+    if(learnedToday >= SESSION_LIMIT){
+      el.innerHTML = `
+        <div class="empty-state" style="padding:22px 16px;">
+          <div class="big" style="font-size:16px;">Tagesziel erreicht 🎉</div>
+          <p style="margin-bottom:14px;">Du hast heute bereits ${learnedToday} verschiedene Karten gelernt. Dein Ziel von ${SESSION_LIMIT} Karten ist erreicht — du kannst trotzdem direkt noch einmal ${sessionSize} Karten lernen.</p>
+          <button class="btn btn-primary btn-block" id="startSessionBtn">Noch einmal ${sessionSize} Karten lernen</button>
+        </div>`;
+    } else {
+      el.innerHTML = `<button class="btn btn-primary btn-block" id="startSessionBtn">Sitzung starten · ${sessionSize} Karten</button>`;
+    }
+  } else if(availableCount > 0){
     el.innerHTML = `
       <div class="empty-state" style="padding:22px 16px;">
         <div class="big" style="font-size:16px;">Für heute nichts fällig 🎉</div>
-        <p style="margin-bottom:14px;">Komm morgen wieder — oder übe freiwillig ein paar Karten, die eigentlich erst später dran wären.</p>
+        <p style="margin-bottom:14px;">Komm später wieder — oder übe freiwillig ein paar Karten, die eigentlich erst später dran wären.</p>
         <button class="btn btn-ghost btn-block" id="freePracticeBtn">Trotzdem ${freeCount} Karten üben</button>
+      </div>`;
+  } else if(scopeLength > 0){
+    el.innerHTML = `
+      <div class="empty-state" style="padding:22px 16px;">
+        <div class="big" style="font-size:16px;">Alle Karten für heute gelernt 🎉</div>
+        <p>Du hast bereits alle vorhandenen Karten mindestens einmal gelernt. Morgen können wieder fällige Karten dazukommen.</p>
       </div>`;
   } else {
     el.innerHTML = `
@@ -1353,6 +1399,7 @@ function renderLearnActions(dueCount, scopeLength){
         <p>Erfasse zuerst ein paar Begriffe im Tab „Erfassen“.</p>
       </div>`;
   }
+
   const startBtn = document.getElementById('startSessionBtn');
   if(startBtn) startBtn.addEventListener('click', ()=>startSession(false));
   const freeBtn = document.getElementById('freePracticeBtn');
@@ -1368,30 +1415,23 @@ function resetSessionView(){
 function startSession(forceFree){
   const now = Date.now();
   const scope = cardsInScope();
-  const remainingSlots = remainingToday();
+  const learnedToday = todayLearnedIds();
   const catText = selectedLearnCat === 'alle' ? '' : ' in der Kategorie „' + CAT_LABEL[selectedLearnCat] + '“';
 
-  if(remainingSlots <= 0){
-    document.getElementById('lernenPre').innerHTML = `
-      <div class="empty-state">
-        <div class="big">Tagesziel erreicht 🎉</div>
-        <p>Du hast heute bereits ${DAILY_LIMIT} verschiedene Karten gelernt. Morgen geht es mit den nächsten fälligen Karten weiter.</p>
-      </div>`;
-    return;
-  }
+  let available = scope.filter(c => !learnedToday.has(c.id));
+  let due = available.filter(c => c.nextReview <= now);
 
-  let due = cardsDueForToday(scope, now);
   if(forceFree){
-    due = shuffle(scope).slice(0, Math.min(DAILY_LIMIT, remainingSlots, scope.length));
+    due = shuffle(available).slice(0, Math.min(SESSION_LIMIT, available.length));
   } else {
-    due = selectSessionCards(due, Math.min(DAILY_LIMIT, remainingSlots));
+    due = selectSessionCards(due, Math.min(SESSION_LIMIT, due.length));
   }
 
   if(due.length === 0){
     document.getElementById('lernenPre').innerHTML = `
       <div class="empty-state">
-        <div class="big">Für heute nichts fällig 🎉</div>
-        <p>Es gibt derzeit keine fälligen Karten${catText}. Komm später wieder oder nutze die freiwillige Extra-Runde.</p>
+        <div class="big">Für heute nichts verfügbar 🎉</div>
+        <p>Es gibt derzeit keine weiteren verfügbaren Karten${catText}. Komm später wieder oder nutze die freiwillige Extra-Runde.</p>
       </div>`;
     return;
   }
