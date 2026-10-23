@@ -1,4 +1,4 @@
-# Mein Karteikasten — Designvariante 2
+# Mein Karteikasten
 
 Diese Projektkopie zeigt eine zweite, hellere und klarere Gestaltung der Vokabel-App. Die bestehende warme Papieroptik wird durch einen sehr hellen, leicht grünlichen Hintergrund, weiße Flächen, dezente grüne Akzente, mehr Weißraum und klarere Bedienflächen ersetzt.
 
