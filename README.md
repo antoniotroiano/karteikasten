@@ -1,4 +1,4 @@
-# Mein Karteikasten
+# Mein Karteikasten — Designvariante 2
 
 Diese Projektkopie zeigt eine zweite, hellere und klarere Gestaltung der Vokabel-App. Die bestehende warme Papieroptik wird durch einen sehr hellen, leicht grünlichen Hintergrund, weiße Flächen, dezente grüne Akzente, mehr Weißraum und klarere Bedienflächen ersetzt.
 
@@ -11,6 +11,8 @@ Diese Variante ist eine separate Projektkopie und noch nicht unter einer eigenen
 ## Technischer Aufbau
 
 - `index.html` — HTML-Struktur und Einbindung der Dateien
+- `favicon.ico` und `favicon.png` — Browser-Favicon in passenden Formaten
+- `apple-touch-icon.png` — Icon für iOS-/Home-Bildschirm-Verknüpfungen
 - `css/styles.css` — Styling für Designvariante 2
 - `js/core.js` — Konfiguration, Speicherung und Tagesfortschritt
 - `js/cards.js` — Erfassen, Bearbeiten, Duplikatprüfung und Listenimport
